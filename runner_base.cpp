@@ -89,6 +89,8 @@ void runner_base::_summarize()
     switch (_res.result)
     {
         case RES_RE:
+            if (_res.memoryCost >= ARG_ml)
+                _res.result = RES_MLE;
             break;
         case RES_TLE:
             _res.timeCost = ARG_tl;
@@ -132,9 +134,9 @@ void runner_base::_forkChild()
         setuid(ARG_uid);
 
         rlimit limit;
-        getrlimit(RLIMIT_AS, &limit);
+        getrlimit(RLIMIT_RSS, &limit);
         limit.rlim_cur = limit.rlim_max = ARG_ml*1024;
-        setrlimit(RLIMIT_AS, &limit);
+        setrlimit(RLIMIT_RSS, &limit);
 
         getrlimit(RLIMIT_STACK, &limit);
         limit.rlim_cur = limit.rlim_max = ARG_sl*1024;
@@ -203,7 +205,6 @@ bool runner_base::_checkExit(int sta)
 
     if (WIFSIGNALED(sta))
     {
-        LOG("oooops...");
         _res.result = RES_RE;
         return 1;
     }
@@ -228,7 +229,7 @@ bool runner_base::_checkSyscall(struct user_regs_struct* regs)
     long callID = regs->orig_rax;
     if (callID == __NR_read || callID == __NR_write)
         return 0;
-    _updateResUsage();
+    //_updateResUsage();
     if (callID>=syscallMaxNum || callID<0)
     {
         LOG("ILLEGAL syscall code:"<< callID);

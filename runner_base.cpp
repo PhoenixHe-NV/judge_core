@@ -114,6 +114,7 @@ void runner_base::_forkChild()
     {
         chdir(ARG_root.c_str());
 
+        /*
         close(0);
         auto fd_input = open(ARG_input.c_str(), O_RDONLY, 0777);
         dup2(fd_input, 0);
@@ -122,6 +123,10 @@ void runner_base::_forkChild()
         auto fd_output = open(ARG_output.c_str(), O_RDWR|O_CREAT|O_TRUNC, 0777);
         dup2(fd_output, 1);
         close(fd_output);
+        */
+
+        freopen(ARG_input.c_str(), "r", stdin);
+        freopen(ARG_output.c_str(), "w", stdout);
 
         setgid(ARG_gid);
         setuid(ARG_uid);
@@ -229,6 +234,7 @@ bool runner_base::_checkSyscall(struct user_regs_struct* regs)
         LOG("ILLEGAL syscall code:"<< callID);
         return 1;
     }
+    //if (callID == __NR_open || callID == __NR_access || callID == __NR_readlink){
     if (callID == __NR_open || callID == __NR_access){
         long buf[12];
         _getStringArg(regs->rdi, buf);

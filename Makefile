@@ -1,6 +1,6 @@
 CXX=clang++
 CC=clang++
-CXXFLAGS=-O3 -ansi -MD -Wall -Werror -Wno-sign-compare -std=c++11 -DDISABLE_LOG
+CXXFLAGS=-O3 -ansi -MD -Wall -Werror -Wno-sign-compare -std=c++11
 LDFLAGS=-pthread
 SOURCES:=$(wildcard *.cpp)
 OBJS:=$(patsubst %.cpp,%.o,$(SOURCES))

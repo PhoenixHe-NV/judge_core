@@ -23,6 +23,10 @@ native_runner::native_runner():
 	_syscallQuota[__NR_tgkill]		    =   -1;
 	_syscallQuota[__NR_gettid]		    =   -1;
 	_syscallQuota[__NR_time]		    =   -1;
+	_syscallQuota[__NR_getrlimit]	    =   -1;
+	_syscallQuota[__NR_rt_sigaction]    =   -1;
+	_syscallQuota[__NR_ioctl]           =   -1;
+	_syscallQuota[__NR_readlink]           =   -1;
 	_syscallQuota[__NR_arch_prctl]	    =   2;
 	_syscallQuota[__NR_execve]		    =   1;
 	_syscallQuota[__NR_exit]		    =   1;

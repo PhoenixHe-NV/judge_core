@@ -8,6 +8,8 @@
 #include <thread>
 #include "common.hpp"
 
+#define FILE_CHECK_SYSCALL 0x7fffffffL
+
 class runner_base
 {
 public:
@@ -38,7 +40,6 @@ private:
     inline bool _updateMemUsage();
 
     bool _intoCall = 1;
-    bool _checkMem = 0;
     pid_t _childpid = 0;
     struct rusage _ur;
     condition_variable_any _cv;

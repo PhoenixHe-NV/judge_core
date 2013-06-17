@@ -1,13 +1,13 @@
-#ifndef __NATIVE_RUNNER_HPP__
-#define __NATIVE_RUNNER_HPP__
+#ifndef __PAS_RUNNER_HPP__
+#define __PAS_RUNNER_HPP__
 
 #include "runner_base.hpp"
 
-class native_runner: public runner_base
+class pas_runner: public runner_base
 {
 public:
     
-    native_runner();
+    pas_runner();
 
 private:
 

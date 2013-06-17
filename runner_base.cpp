@@ -16,7 +16,6 @@
 #include "log.hpp"
 
 DEFINE_ARG(string, cmd, "The command you want to run");
-DEFINE_OPTIONAL_ARG(string, type, "native", "native/python, syscall limit type");
 DEFINE_OPTIONAL_ARG(string, input, "/dev/stdin", "Input File");
 DEFINE_OPTIONAL_ARG(string, output, "/dev/stdout", "Output File");
 DEFINE_OPTIONAL_ARG(int, tl, 1000, "Time limit(ms)");
@@ -58,18 +57,16 @@ void runner_base::_work()
             break;
         if (_intoCall^=1)
             continue;
-        if (_checkMem)
-        {
-            _checkMem = 0;
-            if (_updateMemUsage())
-                break;
-        }
         _peekReg(&regs);
+        if (regs.orig_rax == __NR_read || regs.orig_rax == __NR_write)
+            continue;
         if (_checkSyscall(&regs))
         {
             _res.result = RES_RE;
             break;
         }
+        if (_updateMemUsage())
+            break;
     }
     _updateMemUsage();
     _updateTimeUsage();
@@ -229,15 +226,13 @@ void runner_base::_getStringArg(long addr, long* buf)
 bool runner_base::_checkSyscall(struct user_regs_struct* regs)
 {
     long callID = regs->orig_rax;
-    if (callID == __NR_read || callID == __NR_write)
-        return 0;
     if (callID>=syscallMaxNum || callID<0)
     {
         LOG("ILLEGAL syscall code:"<< callID);
         return 1;
     }
     //if (callID == __NR_open || callID == __NR_access || callID == __NR_readlink){
-    if (callID == __NR_open || callID == __NR_access){
+    if (_syscallQuota[callID] == FILE_CHECK_SYSCALL){
         long buf[12];
         _getStringArg(regs->rdi, buf);
         if (_checkFilePrivilege((char*)buf))
@@ -251,7 +246,6 @@ bool runner_base::_checkSyscall(struct user_regs_struct* regs)
             return 1;
         }
     }
-    _checkMem |= (callID == __NR_mmap);
     if ((_syscallQuota[callID]--))
     {
         //if (syscallQuota[orig_rax]>=0)

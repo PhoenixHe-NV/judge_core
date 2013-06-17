@@ -21,7 +21,6 @@ DEFINE_OPTIONAL_ARG(string, input, "/dev/stdin", "Input File");
 DEFINE_OPTIONAL_ARG(string, output, "/dev/stdout", "Output File");
 DEFINE_OPTIONAL_ARG(int, tl, 1000, "Time limit(ms)");
 DEFINE_OPTIONAL_ARG(int, ml, 64*1024, "Memory limit(kB)");
-DEFINE_OPTIONAL_ARG(int, sl, 16*1024, "Stack limit(kB)");
 DEFINE_OPTIONAL_ARG(int, ol, 1024, "Output limit(Byte)");
 DEFINE_OPTIONAL_ARG(int, uid, 1000, "The uid for executing the program to be judged");
 DEFINE_OPTIONAL_ARG(int, gid, 1000, "The gid for executing the program to be judged");
@@ -39,7 +38,6 @@ runner_base::runner_base()
 runner_base::result_t runner_base::run()
 {
     _work();
-    _updateResUsage();
     _summarize();
     return _res;
 }
@@ -52,7 +50,6 @@ void runner_base::_work()
     wait4(_childpid, &sta, 0, &_ur);     //skip exec
     _running = 1;
     thread alarmTimer(&runner_base::_alarmTimer, this);
-    _updateResUsage();
     while (1)
     {
         _continueLoop();
@@ -61,6 +58,12 @@ void runner_base::_work()
             break;
         if (_intoCall^=1)
             continue;
+        if (_checkMem)
+        {
+            _checkMem = 0;
+            if (_updateMemUsage())
+                break;
+        }
         _peekReg(&regs);
         if (_checkSyscall(&regs))
         {
@@ -68,6 +71,8 @@ void runner_base::_work()
             break;
         }
     }
+    _updateMemUsage();
+    _updateTimeUsage();
     _running = 0;
     _cv.notify_all();
     alarmTimer.join();
@@ -85,16 +90,10 @@ void runner_base::_alarmTimer()
 
 void runner_base::_summarize()
 {
-    minimize(_res.timeCost, ARG_tl);
     switch (_res.result)
     {
         case RES_RE:
-            if (_res.memoryCost >= ARG_ml)
-                _res.result = RES_MLE;
-            break;
         case RES_TLE:
-            _res.timeCost = ARG_tl;
-            break;
         case RES_OK:
         case RES_OLE:
             break;
@@ -134,13 +133,6 @@ void runner_base::_forkChild()
         setuid(ARG_uid);
 
         rlimit limit;
-        getrlimit(RLIMIT_RSS, &limit);
-        limit.rlim_cur = limit.rlim_max = ARG_ml*1024;
-        setrlimit(RLIMIT_RSS, &limit);
-
-        getrlimit(RLIMIT_STACK, &limit);
-        limit.rlim_cur = limit.rlim_max = ARG_sl*1024;
-        setrlimit(RLIMIT_STACK,&limit);
 
         getrlimit(RLIMIT_FSIZE, &limit);
         limit.rlim_cur = limit.rlim_max = ARG_ol;
@@ -161,26 +153,35 @@ void runner_base::_forkChild()
     }
 }
 
-void runner_base::_continueLoop()
+inline void runner_base::_continueLoop()
 { ptrace(PTRACE_SYSCALL, _childpid, NULL, NULL); }
 
-void runner_base::_stopLoop()
+inline void runner_base::_stopLoop()
 { kill(_childpid, SIGKILL); }
 
-void runner_base::_peekReg(struct user_regs_struct* regs)
+inline void runner_base::_peekReg(struct user_regs_struct* regs)
 { ptrace(PTRACE_GETREGS, _childpid, NULL, regs); }
 
-void runner_base::_updateResUsage()
+void runner_base::_updateTimeUsage()
 {
-    maximize(_res.memoryCost, (int32_t)_ur.ru_maxrss);
     tms timesvalue;
     times(&timesvalue);
     clock_t childuser = timesvalue.tms_cutime;
     long clk_tck = sysconf(_SC_CLK_TCK);
     int32_t timeCost = int32_t(double(childuser)/clk_tck*1000);
-    //int32_t timeCost = _ur.ru_utime.tv_sec*1000 + _ur.ru_utime.tv_usec/1000;
     maximize(_res.timeCost, timeCost);
-    //LOG("update :"<< _ur.ru_maxrss<< " "<< timeCost);
+}
+
+inline bool runner_base::_updateMemUsage()
+{
+    maximize(_res.memoryCost, (int32_t)_ur.ru_maxrss);
+    if (_res.memoryCost >= ARG_ml)
+    {
+        _res.result = RES_MLE;
+        return 1;
+    }
+    LOG(_ur.ru_maxrss);
+    return 0;
 }
 
 bool runner_base::_checkExit(int sta)
@@ -229,7 +230,6 @@ bool runner_base::_checkSyscall(struct user_regs_struct* regs)
     long callID = regs->orig_rax;
     if (callID == __NR_read || callID == __NR_write)
         return 0;
-    //_updateResUsage();
     if (callID>=syscallMaxNum || callID<0)
     {
         LOG("ILLEGAL syscall code:"<< callID);
@@ -250,6 +250,7 @@ bool runner_base::_checkSyscall(struct user_regs_struct* regs)
             return 1;
         }
     }
+    _checkMem |= (callID == __NR_mmap);
     if ((_syscallQuota[callID]--))
     {
         //if (syscallQuota[orig_rax]>=0)

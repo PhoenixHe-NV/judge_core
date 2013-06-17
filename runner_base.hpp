@@ -25,18 +25,20 @@ public:
 private:
 
     void _forkChild();
-    void _continueLoop();
-    void _stopLoop();
-    void _peekReg(struct user_regs_struct*);
+    inline void _continueLoop();
+    inline void _stopLoop();
+    inline void _peekReg(struct user_regs_struct*);
     bool _checkExit(int);
     void _getStringArg(long, long*);
     bool _checkSyscall(struct user_regs_struct*);
     void _work();
     void _summarize();
     void _alarmTimer();
-    void _updateResUsage();
+    void _updateTimeUsage();
+    inline bool _updateMemUsage();
 
-    bool _intoCall = 0;
+    bool _intoCall = 1;
+    bool _checkMem = 0;
     pid_t _childpid = 0;
     struct rusage _ur;
     condition_variable_any _cv;

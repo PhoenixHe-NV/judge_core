@@ -94,6 +94,7 @@ void runner_base::_summarize()
     {
         case RES_RE:
         case RES_TLE:
+        case RES_MLE:
         case RES_OK:
         case RES_OLE:
             break;

@@ -32,8 +32,8 @@ int main(int argc, const char* argv[])
     LOG("retCode:   "<<res.returnCode);
     LOG("result:    "<<res.result);
     auto resFile = fopen(ARG_result.c_str(), "w");
-    fprintf(resFile, "%d %d %d %d", 
-            res.result, res.returnCode, res.timeCost, res.memoryCost);
+    fprintf(resFile, "%d %d %d %d %s", 
+            res.result, res.returnCode, res.timeCost, res.memoryCost, res.commit.c_str());
     fclose(resFile);
     return 0;
 }

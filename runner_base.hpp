@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <condition_variable>
 #include <thread>
+#include <string>
 #include "common.hpp"
 
 #define FILE_CHECK_SYSCALL 0x7fffffffL
@@ -16,6 +17,7 @@ public:
 
     struct result_t{
         int32_t timeCost, memoryCost, result, returnCode;
+        string commit;
     };
 
     runner_base();

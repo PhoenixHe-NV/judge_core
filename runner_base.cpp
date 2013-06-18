@@ -63,6 +63,7 @@ void runner_base::_work()
         if (_checkSyscall(&regs))
         {
             _res.result = RES_RE;
+            _res.commit = "ILLEGAL SYSCALL";
             break;
         }
         if (_updateMemUsage())
@@ -92,10 +93,15 @@ void runner_base::_summarize()
         case RES_RE:
         case RES_TLE:
         case RES_MLE:
-        case RES_OK:
         case RES_OLE:
             break;
+        case RES_OK:
+            if (_res.returnCode == 0) break;
+            _res.commit = "exit normally,but return code is not zero";
+            _res.result = RES_RE;
+            break;
         default:
+            _res.commit = "unknown situation...";
             _res.result = RES_RE;
     }
 		
@@ -196,14 +202,22 @@ bool runner_base::_checkExit(int sta)
                 _res.result = RES_OLE;
                 return 1;
             case SIGFPE:
+                _res.commit = "Float Point Error";
+                _res.result = RES_RE;
+                return 1;
             case SIGSEGV:
+                _res.commit = "Sigment Fault";
+                _res.result = RES_RE;
+                return 1;
             default:
+                _res.commit = "unknown situation";
                 _res.result = RES_RE;
                 return 1;
     }
 
     if (WIFSIGNALED(sta))
     {
+        _res.commit = "UNEXPECTED SIGNAL";
         _res.result = RES_RE;
         return 1;
     }

@@ -37,8 +37,9 @@ pas_runner::pas_runner():
     _syscallQuota[__NR_futex]           =   -1;
     _syscallQuota[__NR_remap_file_pages]=   -1;
 
+	_syscallQuota[__NR_ioctl]	    	=   -1;
+
     _syscallQuota[__NR_rt_sigaction]    =   4;
-	_syscallQuota[__NR_ioctl]	    	=   4;
 	_syscallQuota[__NR_exit]		    =   1;
 	_syscallQuota[__NR_exit_group]	    =   1;
 

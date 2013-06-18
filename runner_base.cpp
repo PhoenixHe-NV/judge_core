@@ -34,11 +34,11 @@ runner_base::runner_base()
     _res.result = -1;
 }
 
-runner_base::result_t runner_base::run()
+runner_base::result_t* runner_base::run()
 {
     _work();
     _summarize();
-    return _res;
+    return &_res;
 }
 
 void runner_base::_work()
@@ -63,14 +63,16 @@ void runner_base::_work()
         if (_checkSyscall(&regs))
         {
             _res.result = RES_RE;
-            _res.commit = "ILLEGAL SYSCALL";
+            LOG("what?");
+            strcpy(_res.commit, "ILLEGAL SYSCALL");
+            LOG("yes!");
             break;
         }
         if (_updateMemUsage())
             break;
     }
-    _updateMemUsage();
     _updateTimeUsage();
+    _updateMemUsage();
     _running = 0;
     _cv.notify_all();
     alarmTimer.join();
@@ -91,17 +93,21 @@ void runner_base::_summarize()
     switch (_res.result)
     {
         case RES_RE:
-        case RES_TLE:
         case RES_MLE:
+            break;
+        case RES_TLE:
+            if (_res.timeCost == 0)
+                _res.timeCost = ARG_tl;
+            break;
         case RES_OLE:
             break;
         case RES_OK:
             if (_res.returnCode == 0) break;
-            _res.commit = "exit normally,but return code is not zero";
+            strcpy(_res.commit, "exit normally,but return code is not zero");
             _res.result = RES_RE;
             break;
         default:
-            _res.commit = "unknown situation...";
+            strcpy(_res.commit, "unknown situation...");
             _res.result = RES_RE;
     }
 		
@@ -202,22 +208,22 @@ bool runner_base::_checkExit(int sta)
                 _res.result = RES_OLE;
                 return 1;
             case SIGFPE:
-                _res.commit = "Float Point Error";
+                strcpy(_res.commit, "Float Point Error");
                 _res.result = RES_RE;
                 return 1;
             case SIGSEGV:
-                _res.commit = "Sigment Fault";
+                strcpy(_res.commit, "Sigment Fault");
                 _res.result = RES_RE;
                 return 1;
             default:
-                _res.commit = "unknown situation";
+                strcpy(_res.commit, "unknown situation");
                 _res.result = RES_RE;
                 return 1;
     }
 
     if (WIFSIGNALED(sta))
     {
-        _res.commit = "UNEXPECTED SIGNAL";
+        strcpy(_res.commit, "UNEXPECTED SIGNAL");
         _res.result = RES_RE;
         return 1;
     }

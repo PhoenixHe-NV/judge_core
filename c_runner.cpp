@@ -35,6 +35,8 @@ c_runner::c_runner():
     _syscallQuota[__NR_futex]           =   -1;
     _syscallQuota[__NR_remap_file_pages]=   -1;
 
+	_syscallQuota[__NR_ioctl]	    	=   -1;
+
 	_syscallQuota[__NR_uname]		    =   1;
 	_syscallQuota[__NR_arch_prctl]	    =   1;
 	_syscallQuota[__NR_exit]		    =   1;

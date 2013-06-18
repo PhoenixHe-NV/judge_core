@@ -27,13 +27,13 @@ int main(int argc, const char* argv[])
     }
     auto res = R->run();
     LOG("----FINAL----");
-    LOG("time:      "<<res.timeCost);
-    LOG("memory:    "<<res.memoryCost);
-    LOG("retCode:   "<<res.returnCode);
-    LOG("result:    "<<res.result);
+    LOG("time:      "<< res->timeCost);
+    LOG("memory:    "<< res->memoryCost);
+    LOG("retCode:   "<< res->returnCode);
+    LOG("result:    "<< res->result);
     auto resFile = fopen(ARG_result.c_str(), "w");
     fprintf(resFile, "%d %d %d %d %s", 
-            res.result, res.returnCode, res.timeCost, res.memoryCost, res.commit.c_str());
+            res->result, res->returnCode, res->timeCost, res->memoryCost, res->commit);
     fclose(resFile);
     return 0;
 }

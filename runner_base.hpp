@@ -17,14 +17,14 @@ public:
 
     struct result_t{
         int32_t timeCost, memoryCost, result, returnCode;
-        string commit;
+        char commit[128];
     };
 
     runner_base();
     runner_base(const runner_base&) = delete;
     runner_base& operator=(const runner_base&) = delete;
 
-    result_t run();
+    result_t* run();
 
 private:
 

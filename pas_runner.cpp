@@ -1,5 +1,6 @@
 #include "pas_runner.hpp"
 #include "common.hpp"
+#include "log.hpp"
 
 #include <unistd.h>
 #include <string.h>
@@ -51,7 +52,20 @@ pas_runner::pas_runner():
 void pas_runner::_execTarget()
 { execl(ARG_cmd.c_str(), ARG_cmd.c_str(), NULL); }
 
+const char* _pas_whilelist[]=
+{
+    "/proc/self/exe",
+    "/etc/timezone",
+    "/usr/share/zoneinfo/Asia/Shanghai"
+};
+
 bool pas_runner::_checkFilePrivilege(const char* f)
 { 
-    return strcmp(f, "/proc/self/exe") == 0;
+    for (int i = 0;i < 3; ++i)
+    {
+        LOG(_pas_whilelist[i]);
+        if (strcmp(f, _pas_whilelist[i]) == 0) return 1;
+        LOG("NOT PASS");
+    }
+    return 0;
 }

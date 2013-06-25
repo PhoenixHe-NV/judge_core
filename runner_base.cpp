@@ -103,7 +103,7 @@ void runner_base::_summarize()
             break;
         case RES_OK:
             if (_res.returnCode == 0) break;
-            strcpy(_res.commit, "exit normally,but return code is not zero");
+            strcpy(_res.commit, "Return code is not zero");
             _res.result = RES_RE;
             break;
         default:

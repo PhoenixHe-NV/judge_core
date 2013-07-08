@@ -1,7 +1,9 @@
 #include "c_runner.hpp"
 #include "common.hpp"
+#include "log.hpp"
 
 #include <unistd.h>
+#include <string.h>
 
 DECLARE_ARG(string, cmd);
 
@@ -41,10 +43,17 @@ c_runner::c_runner():
 	_syscallQuota[__NR_arch_prctl]	    =   1;
 	_syscallQuota[__NR_exit]		    =   1;
 	_syscallQuota[__NR_exit_group]	    =   1;
+
+    _syscallQuota[__NR_open]            =   FILE_CHECK_SYSCALL;
+    _syscallQuota[__NR_access]          =   FILE_CHECK_SYSCALL;
+    _syscallQuota[__NR_readlink]         =   FILE_CHECK_SYSCALL;
 }
 
 void c_runner::_execTarget()
 { execl(ARG_cmd.c_str(), ARG_cmd.c_str(), NULL); }
 
-bool c_runner::_checkFilePrivilege(const char*)
-{ return 0; }
+bool c_runner::_checkFilePrivilege(const char* f)
+{ 
+    if (strcmp(f,"/proc/meminfo")==0) return 1; 
+    return 0; 
+}

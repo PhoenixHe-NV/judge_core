@@ -63,9 +63,7 @@ void runner_base::_work()
         if (_checkSyscall(&regs))
         {
             _res.result = RES_RE;
-            LOG("what?");
             strcpy(_res.commit, "ILLEGAL SYSCALL");
-            LOG("yes!");
             break;
         }
         if (_updateMemUsage())

@@ -55,14 +55,14 @@ void pas_runner::_execTarget()
 
 const char* _pas_whilelist[]=
 {
-    "/proc/self/exe",
     "/etc/timezone",
     "/usr/share/zoneinfo/Asia/Shanghai"
 };
 
 bool pas_runner::_checkFilePrivilege(const char* f)
 { 
-    for (int i = 0;i < 3; ++i)
+    if (strncmp("/proc/", f, 6) == 0) return 1; 
+    for (int i = 0;i < 2; ++i)
     {
         LOG(_pas_whilelist[i]);
         if (strcmp(f, _pas_whilelist[i]) == 0) return 1;
